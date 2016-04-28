@@ -2,12 +2,12 @@ package com.github.timm.cucumber.generate;
 
 /*
  * Copyright 2001-2005 The Apache Software Foundation.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -97,7 +97,7 @@ public class GenerateRunnersMojo extends AbstractMojo implements FileGeneratorCo
     /**
      * @see CucumberOptions.tags
      */
-    @Parameter(defaultValue = "\"@complete\", \"@accepted\"", property = "cucumber.tags", required = true)
+    @Parameter(defaultValue = "\"~@wip\", \"@~ignore\"", property = "cucumber.tags", required = true)
     private String tags;
 
     @Parameter(defaultValue = "UTF-8", property = "project.build.sourceEncoding", readonly = true)
@@ -106,9 +106,16 @@ public class GenerateRunnersMojo extends AbstractMojo implements FileGeneratorCo
     @Parameter(defaultValue = "false", property = "cucumber.tags.filterOutput", required = true)
     private boolean filterFeaturesByTags;
 
-
     @Parameter(defaultValue = "false", property = "useTestNG", required = true)
     private boolean useTestNG;
+
+    /**
+     * Tag prefix for parallel scenarios execution. If defined and not empty then all scenarios which contain a tag with
+     * such prefix will be run in own generated IT class other scenarios from the same feature file will be executed
+     * sequentially as part of another IT class.
+     */
+    @Parameter(defaultValue = "", property = "cucumber.tags.parallelPrefix")
+    private String parallelTagPrefix;
 
     /**
      * @see CucumberOptions
@@ -124,12 +131,10 @@ public class GenerateRunnersMojo extends AbstractMojo implements FileGeneratorCo
     public void execute() throws MojoExecutionException {
 
         if (!featuresDirectory.exists()) {
-            throw new MojoExecutionException(
-                    "Features directory does not exist");
+            throw new MojoExecutionException("Features directory does not exist");
         }
 
-        final Collection<File> featureFiles = FileUtils.listFiles(
-                featuresDirectory, new String[] { "feature" }, true);
+        final Collection<File> featureFiles = FileUtils.listFiles(featuresDirectory, new String[] {"feature"}, true);
 
         createOutputDirIfRequired();
 
@@ -138,9 +143,7 @@ public class GenerateRunnersMojo extends AbstractMojo implements FileGeneratorCo
 
         fileGenerator.generateCucumberITFiles(outputDirectory, featureFiles);
 
-        getLog().info(
-                "Adding " + outputDirectory.getAbsolutePath()
-                + " to test-compile source root");
+        getLog().info("Adding " + outputDirectory.getAbsolutePath() + " to test-compile source root");
 
         project.addTestCompileSourceRoot(outputDirectory.getAbsolutePath());
     }
@@ -154,17 +157,19 @@ public class GenerateRunnersMojo extends AbstractMojo implements FileGeneratorCo
     /**
      * Overrides the parameters with cucumber.options if they have been
      * specified. Currently only tags are supported.
+     * 
      * @return
      */
     private OverriddenCucumberOptionsParameters overrideParametersWithCucumberOptions() {
 
         final OverriddenCucumberOptionsParameters overriddenParameters = new OverriddenCucumberOptionsParameters();
-        overriddenParameters.setTags(this.tags).setGlue(this.glue)
-        .setStrict(this.strict).setFormat(this.format)
-        .setMonochrome(this.monochrome);
+        overriddenParameters.setTags(this.tags)
+                .setGlue(this.glue)
+                .setStrict(this.strict)
+                .setFormat(this.format)
+                .setMonochrome(this.monochrome);
 
-        overriddenParameters
-        .overrideParametersWithCucumberOptions(cucumberOptions);
+        overriddenParameters.overrideParametersWithCucumberOptions(cucumberOptions);
 
         return overriddenParameters;
 
@@ -190,6 +195,12 @@ public class GenerateRunnersMojo extends AbstractMojo implements FileGeneratorCo
         return useTestNG;
     }
 
-    public String getNamingScheme() {return namingScheme; }
+    public String getNamingScheme() {
+        return namingScheme;
+    }
+
+    public String getParallelTagPrefix() {
+        return parallelTagPrefix;
+    }
 
 }
