@@ -50,6 +50,12 @@ Add the following to your POM file:
          <useTestNG>false</useTestNG>
          <!-- The naming scheme to use for the generated test classes.  One of 'simple' or 'feature-title' --> 
          <namingScheme>simple</namingScheme>
+         <!-- The tag prefix to use for parallel scenarios execution. 
+             If specified, IT test files will be generated per each tag with "parallel" prefix concidering the feature file contains the required tags (cucumber.tags property).
+             if feature doesn't contain "parallel" tags or not all scenarios are tagged as "parallel" then all such scenarios will be covered by additional generated test with all required tags excluding "parallel" tags.
+             Scenarios should have unique @parallel_* tag within a feature. 
+             Not scecified by default, any custom prefix can be added in pom config or via cucumber.tags.parallelPrefix property  --> 
+         <parallelPrefix>parallel</parallelPrefix>
       </configuration>
     </execution>
   </executions>
